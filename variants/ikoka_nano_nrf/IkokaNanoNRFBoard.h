@@ -4,10 +4,6 @@
 #include <Arduino.h>
 #include <helpers/NRF52Board.h>
 
-#ifndef USER_BTN_PRESSED
-#define USER_BTN_PRESSED LOW
-#endif
-
 #ifdef XIAO_NRF52
 
 class IkokaNanoNRFBoard : public NRF52BoardDCDC {
