@@ -76,7 +76,7 @@ void initVariant() {
   digitalWrite(PIN_QSPI_CS, HIGH);
 
   pinMode(LED_RED, OUTPUT);
-  digitalWrite(LED_RED, HIGH);
+  digitalWrite(LED_RED, !LED_STATE_ON);   // boot idle = OFF (HIGH for active-LOW)
   pinMode(LED_GREEN, OUTPUT);
   digitalWrite(LED_GREEN, HIGH);
   pinMode(LED_BLUE, OUTPUT);
