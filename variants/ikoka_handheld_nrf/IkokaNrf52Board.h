@@ -4,9 +4,18 @@
 #include <MeshCore.h>
 #include <helpers/NRF52Board.h>
 
+#ifndef USER_BTN_PRESSED
+#define USER_BTN_PRESSED LOW
+#endif
+
 #ifdef IKOKA_NRF52
 
 class IkokaNrf52Board : public NRF52BoardDCDC {
+protected:
+#if NRF52_POWER_MANAGEMENT
+  void initiateShutdown(uint8_t reason) override;
+#endif
+
 public:
   IkokaNrf52Board() : NRF52Board("XIAO_NRF52_OTA") {}
   void begin();
@@ -20,24 +29,28 @@ public:
   }
 #endif
 
-  uint16_t getBattMilliVolts() override {
-    // Please read before going further ;)
-    // https://wiki.seeedstudio.com/XIAO_BLE#q3-what-are-the-considerations-when-using-xiao-nrf52840-sense-for-battery-charging
-
-    // We can't drive VBAT_ENABLE to HIGH as long
-    // as we don't know whether we are charging or not ...
-    // this is a 3mA loss (4/1500)
-    digitalWrite(VBAT_ENABLE, LOW);
-    int adcvalue = 0;
-    analogReadResolution(12);
-    analogReference(AR_INTERNAL_3_0);
-    delay(10);
-    adcvalue = analogRead(PIN_VBAT);
-    return (adcvalue * ADC_MULTIPLIER * AREF_VOLTAGE) / 4.096;
-  }
+  uint16_t getBattMilliVolts() override;
 
   const char* getManufacturerName() const override {
     return "Ikoka Handheld E22 30dBm (Xiao_nrf52)";
+  }
+
+  void powerOff() override {
+    // set led on and wait for button release before poweroff
+    digitalWrite(PIN_LED, LOW);
+#ifdef PIN_USER_BTN
+    while(digitalRead(PIN_USER_BTN) == USER_BTN_PRESSED);
+#endif
+    digitalWrite(LED_GREEN, HIGH);
+    digitalWrite(LED_BLUE, HIGH);
+    digitalWrite(PIN_LED, HIGH);
+
+#ifdef PIN_USER_BTN
+    // configure button press to wake up when in powered off state
+    nrf_gpio_cfg_sense_input(digitalPinToInterrupt(g_ADigitalPinMap[PIN_USER_BTN]), NRF_GPIO_PIN_PULLUP, NRF_GPIO_PIN_SENSE_LOW);
+#endif
+
+    NRF52Board::powerOff();
   }
 };
 
